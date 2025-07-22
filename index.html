@@ -1,105 +1,95 @@
-```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>모네로 채굴 테스트 대시보드</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        #dashboard { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
-        #dashboard p { margin: 5px 0; }
-        canvas { margin-top: 10px; }
-        #error { color: red; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>모네로 채굴 테스트 대시보드</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    canvas { border: 1px solid #000; margin-bottom: 20px; }
+    #dashboard { border: 1px solid #ccc; padding: 10px; }
+    #dashboard p { margin: 5px 0; }
+    #error { color: red; }
+  </style>
 </head>
 <body>
-    <h1>모네로 채굴 테스트 대시보드</h1>
-    <p>채굴이 성공적으로 진행되면(총 해시 1000 이상) 원이 빨간색에서 초록색으로 바뀝니다.</p>
-    <canvas id="myCanvas" width="200" height="200" style="border:1px solid #000;"></canvas>
-    <div id="dashboard">
-        <p><strong>채굴 상태:</strong> <span id="status">대기 중</span></p>
-        <p><strong>해시율:</strong> <span id="hashRate">0 H/s</span></p>
-        <p><strong>총 해시:</strong> <span id="totalHashes">0</span></p>
-        <p><strong>사용된 스레드:</strong> <span id="threads">0</span></p>
-        <p><strong>CPU 사용량:</strong> <span id="throttle">30%</span></p>
-        <p><strong>오류 메시지:</strong> <span id="error">없음</span></p>
-    </div>
+  <h1>모네로 채굴 테스트 대시보드</h1>
+  <p>총 해시가 1000 이상이면 원이 빨간색에서 초록색으로 바뀝니다.</p>
+  <canvas id="myCanvas" width="200" height="200"></canvas>
+  <div id="dashboard">
+    <p><strong>채굴 상태:</strong> <span id="status">대기 중</span></p>
+    <p><strong>해시율:</strong> <span id="hashRate">0 H/s</span></p>
+    <p><strong>총 해시:</strong> <span id="totalHashes">0</span></p>
+    <p><strong>스레드 수:</strong> <span id="threads">-</span></p>
+    <p><strong>CPU 사용량:</strong> <span id="throttle">30%</span></p>
+    <p><strong>오류 메시지:</strong> <span id="error">없음</span></p>
+  </div>
 
-    <!-- monero-webminer 클라이언트 스크립트 -->
-    <script src="https://cdn.jsdelivr.net/gh/NajmAjmal/monero-webminer@main/script.js"></script>
-    <script>
-        // 캔버스와 컨텍스트 가져오기
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
+  <!-- WebMinerPool 채굴 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/gh/notgiven688/webminerpool@master/sdk/webmr.js"></script>
+  <script>
+    // 캔버스 세팅
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    function drawCircle(color) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      ctx.arc(100, 100, 50, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.closePath();
+    }
+    drawCircle('red');
 
-        // 원 그리기 함수
-        function drawCircle(color) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.beginPath();
-            ctx.arc(100, 100, 50, 0, 2 * Math.PI);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.closePath();
+    // 대시보드 요소
+    const statusEl = document.getElementById('status');
+    const hashRateEl = document.getElementById('hashRate');
+    const totalHashesEl = document.getElementById('totalHashes');
+    const threadsEl = document.getElementById('threads');
+    const throttleEl = document.getElementById('throttle');
+    const errorEl = document.getElementById('error');
+
+    try {
+      // 작동하는 WebSocket 프록시 주소 설정
+      server = "wss://minexmr.stream:8181";
+
+      // 채굴 시작 (여기에 본인 지갑 주소 입력)
+      startMining(
+        "moneroocean.stream",
+        "42uPLifaPuT1a9ZAsekfSk1WufupQELmNecGPTtvsJ6t9ZVyw4MadYe6xXVkR2BXabA3KD6zLNUfW7e9TNqCSGF3Ta39b5e", // ← 본인의 Monero 지갑 주소로 변경!
+        "web-miner-001",
+        -1,
+        ""
+      );
+      throttleMiner = 30; // CPU 제한 30%
+
+      // 실시간 모니터링
+      setInterval(() => {
+        if (typeof getTotalHashes === 'function') {
+          const hashes = getTotalHashes();
+          const rate = getHashesPerSecond().toFixed(2);
+          const threads = getNumThreads();
+
+          totalHashesEl.textContent = hashes;
+          hashRateEl.textContent = `${rate} H/s`;
+          threadsEl.textContent = threads;
+          throttleEl.textContent = `${throttleMiner}%`;
+          statusEl.textContent = "채굴 중";
+          errorEl.textContent = "없음";
+
+          if (hashes >= 1000) {
+            drawCircle('green');
+            statusEl.textContent = "채굴 성공 (1000 해시 도달)";
+          }
+        } else {
+          statusEl.textContent = "채굴 초기화 실패";
+          errorEl.textContent = "채굴 라이브러리가 작동하지 않음";
         }
-
-        // 초기 상태: 빨간 원
-        drawCircle('red');
-
-        // 대시보드 요소
-        const statusElement = document.getElementById('status');
-        const hashRateElement = document.getElementById('hashRate');
-        const totalHashesElement = document.getElementById('totalHashes');
-        const threadsElement = document.getElementById('threads');
-        const throttleElement = document.getElementById('throttle');
-        const errorElement = document.getElementById('error');
-
-        // 모네로 채굴 설정
-        try {
-            server = "wss://minexmr.stream:8181"; // WebSocket 프록시 서버
-            startMining(
-                "moneroocean.stream", // 마이닝 풀
-                "42uPLifaPuT1a9ZAsekfSk1WufupQELmNecGPTtvsJ6t9ZVyw4MadYe6xXVkR2BXabA3KD6zLNUfW7e9TNqCSGF3Ta39b5e", // 사용자의 모네로 지갑 주소
-                "web-miner-001", // 작업자 ID
-                -1, // 스레드 수 (자동)
-                "" // 비밀번호
-            );
-            throttleMiner = 30; // CPU 사용량 30% 제한
-
-            // 채굴 상태 모니터링
-            setInterval(function() {
-                if (typeof getHashesPerSecond !== 'undefined') {
-                    const hashRate = getHashesPerSecond().toFixed(2);
-                    const totalHashes = getTotalHashes();
-                    const threads = getNumThreads();
-                    const throttle = throttleMiner;
-
-                    // 대시보드 업데이트
-                    statusElement.textContent = "채굴 중";
-                    hashRateElement.textContent = hashRate + " H/s";
-                    totalHashesElement.textContent = totalHashes;
-                    threadsElement.textContent = threads;
-                    throttleElement.textContent = throttle + "%";
-                    errorElement.textContent = "없음";
-
-                    console.log(`상태: 채굴 중, 해시율: ${hashRate} H/s, 총 해시: ${totalHashes}, 스레드: ${threads}`);
-
-                    // 1000 해시 도달 시 색상 변경
-                    if (totalHashes >= 1000) {
-                        drawCircle('green');
-                        statusElement.textContent = "채굴 성공 (1000 해시 도달)";
-                    }
-                } else {
-                    statusElement.textContent = "채굴 초기화 실패";
-                    errorElement.textContent = "채굴 스크립트 초기화 중 오류 발생";
-                    console.error("채굴 스크립트 초기화 실패");
-                }
-            }, 2000);
-        } catch (e) {
-            statusElement.textContent = "오류 발생";
-            errorElement.textContent = e.message;
-            console.error("채굴 설정 오류:", e.message);
-        }
-    </script>
+      }, 2000);
+    } catch (err) {
+      statusEl.textContent = "오류 발생";
+      errorEl.textContent = err.message;
+      console.error("오류:", err);
+    }
+  </script>
 </body>
 </html>
-```
